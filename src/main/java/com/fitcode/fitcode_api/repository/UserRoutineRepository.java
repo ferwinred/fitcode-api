@@ -1,0 +1,15 @@
+package com.fitcode.fitcode_api.repository;
+
+import com.fitcode.fitcode_api.models.UserRoutine;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface UserRoutineRepository extends JpaRepository<UserRoutine, Long> {
+    // Define custom query methods if needed
+    List<UserRoutine> findByUserId(Long userId);
+
+    List<UserRoutine> findByRoutineId(Long routineId);
+
+    List<UserRoutine> findByUserIdAndRoutineId(Long userId, Long routineId);
+
+}
