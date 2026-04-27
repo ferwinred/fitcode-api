@@ -4,9 +4,13 @@ import com.fitcode.fitcode_api.models.*;
 import com.fitcode.fitcode_api.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -24,6 +28,8 @@ public class DataSeeder implements CommandLineRunner {
     private final UserWorkoutProgressRepository userWorkoutProgressRepository;
     // optional repositories
     private final UserRoutineSessionRepository userRoutineSessionRepository; // puede que exista o no
+    private final RoleRepository roleRepository; // para asignar rol admin al usuario seed
+    private final UserRepository userRepository; // para asignar autor a rutinas seed
 
     @Override
     @Transactional
@@ -34,31 +40,41 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        List<Workout> workouts;
         // 1) Categories (si no hay)
         List<WorkoutCategory> categories = ensureCategories();
 
-        // 2) Generate 50 workouts
-        List<Workout> workouts = IntStream.rangeClosed(1, 50)
-                .mapToObj(i -> {
-                    Workout w = Workout.builder()
-                            .title("Workout " + i + " - " + randomName())
-                            .description("Rutina enfocada en " + randomMuscleGroup())
-                            .difficulty(randomDifficulty())
-                            .mainMuscleGroup(randomMuscleGroup())
-                            .equipment(randomEquipment())
-                            .sets(randomInt(3, 5))
-                            .reps(randomInt(8, 15))
-                            .durationSeconds(randomInt(30, 300))
-                            .thumbnailUrl("https://picsum.photos/seed/workout" + i + "/600/400")
-                            .isPublic(1)
-                            .metadata("{\"tag\":\"seed\"}")
-                            .build();
-                    // asignar categoría aleatoria
-                    w.setCategory(categories.get(randomInt(0, categories.size() - 1)));
-                    return w;
-                }).map(workoutRepository::save).collect(Collectors.toList());
+        if (workoutRepository.count() == 0) {
+            System.out.println("DataSeeder: Generando datos de ejemplo...");
+            // 2) Generate 50 workouts
+            workouts = IntStream.rangeClosed(1, 50)
+                    .mapToObj(i -> {
+                        Workout w = Workout.builder()
+                                .title("Workout " + i + " - " + randomName())
+                                .description("Rutina enfocada en " + randomMuscleGroup())
+                                .difficulty(randomDifficulty())
+                                .mainMuscleGroup(randomMuscleGroup())
+                                .equipment(randomEquipment())
+                                .sets(randomInt(3, 5))
+                                .reps(randomInt(8, 15))
+                                .durationSeconds(randomInt(30, 300))
+                                .thumbnailUrl("https://picsum.photos/seed/workout" + i + "/600/400")
+                                .isPublic(1)
+                                .metadata("{\"tag\":\"seed\"}")
+                                .build();
+                        // asignar categoría aleatoria
+                        w.setCategory(categories.get(randomInt(0, categories.size() - 1)));
+                        return w;
+                    }).map(workoutRepository::save).collect(Collectors.toList());
 
-        System.out.println("Seed: created " + workouts.size() + " workouts.");
+            System.out.println("Seed: created " + workouts.size() + " workouts.");
+        } else {
+            workouts = workoutRepository.findAll();
+            System.out.println("DataSeeder: workouts ya existen (" + workouts.size()
+                    + " encontrados), saltando creación de workouts.");
+        }
 
         // 3) Generate 80 workout videos (some linked to workouts)
         // lista de youtube ids (ejemplos reales o placeholders)
@@ -70,87 +86,137 @@ public class DataSeeder implements CommandLineRunner {
         };
 
         List<WorkoutVideo> videos = new ArrayList<>();
-        for (int i = 1; i <= 80; i++) {
-            String vid = youtubeIds[randomInt(0, youtubeIds.length - 1)];
-            // embed url for iframe consumption
-            String embedUrl = "https://www.youtube.com/embed/" + vid + "?rel=0";
-            WorkoutVideo v = WorkoutVideo.builder()
-                    .title("Video " + i + " - " + randomName())
-                    .url(embedUrl)
-                    .durationSeconds(randomInt(30, 900))
-                    .isPublic(1)
-                    .videoType(randomVideoType())
-                    .resolution(randomResolution())
-                    .build();
-            // optionally link to a workout in ~60% cases
-            if (Math.random() < 0.6) {
-                v.setWorkout(workouts.get(randomInt(0, workouts.size() - 1)));
-            }
-            videos.add(workoutVideoRepository.save(v));
+        List<String> roles = Arrays.asList("admin", "user", "coach");
+
+        for (int i = 0; i <= roles.size() - 1; i++) {
+            Role roleCreated = roleRepository.findByName(roles.get(i))
+                    .orElseGet(() -> roleRepository.save(
+                            Role.builder()
+                                    .name("admin")
+                                    .description("Administrador")
+                                    .createdAt(LocalDateTime.now())
+                                    .build()));
+
+            System.out.println("Seed: role '" + roleCreated.getName() + "' created with id " + roleCreated.getId());
         }
-        System.out.println("Seed: created " + videos.size() + " workout videos.");
 
+        Role role = roleRepository.findByName("admin")
+                .orElseThrow(() -> new IllegalStateException("Role 'admin' should have been created"));
+
+        // set author user id 3 (lazy User entity required)
+        User author = userRepository.findByEmail("ferwin@fitcode.com")
+                .orElseGet(() -> userRepository.save(
+                        User.builder()
+                                .email("ferwin@fitcode.com")
+                                .fullName("Ferwin Arias")
+                                .passwordHash(passwordEncoder.encode("securepass123"))
+                                .displayName("Administrador")
+                                .role(role)
+                                .sex("F")
+                                .heightCm(170)
+                                .weightKg(70.5)
+                                .metadata("{ \"seed\":\"true\" }")
+                                .dateOfBirth(LocalDate.of(2000, 5, 5))
+                                .createdAt(LocalDateTime.now())
+                                .build()));
+
+        if ( workoutVideoRepository.count() == 0) {
+            System.out.println("DataSeeder: creando workout videos...");
+            for (int i = 1; i <= 80; i++) {
+                String vid = youtubeIds[randomInt(0, youtubeIds.length - 1)];
+                // embed url for iframe consumption
+                String embedUrl = "https://www.youtube.com/embed/" + vid + "?rel=0";
+                WorkoutVideo v = WorkoutVideo.builder()
+                        .title("Video " + i + " - " + randomName())
+                        .url(embedUrl)
+                        .durationSeconds(randomInt(30, 900))
+                        .isPublic(1)
+                        .videoType(randomVideoType())
+                        .resolution(randomResolution())
+                        .build();
+                // optionally link to a workout in ~60% cases
+                if (Math.random() < 0.6) {
+                    v.setWorkout(workouts.get(randomInt(0, workouts.size() - 1)));
+                }
+                videos.add(workoutVideoRepository.save(v));
+            }
+            System.out.println("Seed: created " + videos.size() + " workout videos.");
+        }
+        List<Routine> routines;
         // 4) Generate 30 routines (author user id = 3)
-        List<Routine> routines = IntStream.rangeClosed(1, 30).mapToObj(i -> {
-            Routine r = Routine.builder()
-                    .title("Rutina #" + i + " - " + randomRoutineName())
-                    .description("Rutina diseñada para nivel " + randomDifficulty())
-                    .difficulty(randomDifficulty())
-                    .durationMinutes(randomInt(10, 60))
-                    .isPublic(1)
-                    .metadata("{\"seed\":\"true\"}")
-                    .build();
-            // set author user id 3 (lazy User entity required)
-            User author = new User();
-            author.setId(3L);
-            r.setAuthor(author);
-            return routineRepository.save(r);
-        }).collect(Collectors.toList());
+        if (routineRepository.count() == 0) {
+            routines = IntStream.rangeClosed(1, 30).mapToObj(i -> {
+                Routine r = Routine.builder()
+                        .title("Rutina #" + i + " - " + randomRoutineName())
+                        .description("Rutina diseñada para nivel " + randomDifficulty())
+                        .difficulty(randomDifficulty())
+                        .durationMinutes(randomInt(10, 60))
+                        .isPublic(1)
+                        .metadata("{\"seed\":\"true\"}")
+                        .author(author)
+                        .build();
 
-        System.out.println("Seed: created " + routines.size() + " routines.");
+                return routineRepository.save(r);
+            }).collect(Collectors.toList());
+
+            System.out.println("Seed: created " + routines.size() + " routines.");
+
+        } else {
+            routines = routineRepository.findAll();
+        }
+
+        List<RoutineWorkout> createdRoutineWorkouts;
 
         // 5) For each routine add 5-8 RoutineWorkouts linking random workouts
-        List<RoutineWorkout> createdRoutineWorkouts = new ArrayList<>();
-        for (Routine r : routines) {
-            int count = randomInt(5, 8);
-            // shuffle and pick unique workouts
-            List<Workout> chosen = new ArrayList<>(workouts);
-            Collections.shuffle(chosen);
-            chosen = chosen.subList(0, Math.min(count, chosen.size()));
-            int pos = 1;
-            for (Workout w : chosen) {
-                RoutineWorkout rw = RoutineWorkout.builder()
-                        .routine(r)
-                        .workout(w)
-                        .position(pos++)
-                        .sets(w.getSets() != null ? w.getSets() : 3)
-                        .reps(String.valueOf(w.getReps() != null ? w.getReps() : 10))
-                        .restSeconds(30)
-                        .durationSeconds(w.getDurationSeconds())
-                        .notes("Ejecutar con buena técnica")
-                        .build();
-                createdRoutineWorkouts.add(routineWorkoutRepository.save(rw));
+        if (routineWorkoutRepository.count() == 0) {
+            System.out.println("DataSeeder: creando RoutineWorkouts para rutinas...");
+
+            createdRoutineWorkouts = new ArrayList<>();
+            for (Routine r : routines) {
+                int count = randomInt(5, 8);
+                // shuffle and pick unique workouts
+                List<Workout> chosen = new ArrayList<>(workouts);
+                Collections.shuffle(chosen);
+                chosen = chosen.subList(0, Math.min(count, chosen.size()));
+                int pos = 1;
+                for (Workout w : chosen) {
+                    RoutineWorkout rw = RoutineWorkout.builder()
+                            .routine(r)
+                            .workout(w)
+                            .position(pos++)
+                            .sets(w.getSets() != null ? w.getSets() : 3)
+                            .reps(String.valueOf(w.getReps() != null ? w.getReps() : 10))
+                            .restSeconds(30)
+                            .durationSeconds(w.getDurationSeconds())
+                            .notes("Ejecutar con buena técnica")
+                            .build();
+                    createdRoutineWorkouts.add(routineWorkoutRepository.save(rw));
+                }
             }
+            System.out.println("Seed: created " + createdRoutineWorkouts.size() + " routine-workouts.");
+
+        } else {
+
+            createdRoutineWorkouts = routineWorkoutRepository.findAll();
+            System.out.println("DataSeeder: RoutineWorkouts ya existen (" + createdRoutineWorkouts.size()
+                    + " encontrados), saltando creación de RoutineWorkouts.");
         }
-        System.out.println("Seed: created " + createdRoutineWorkouts.size() + " routine-workouts.");
 
         // 6) Generate some UserWorkoutProgress entries for user id = 3 if session
         // repository exists
         try {
             // try to find or create a session for user id 3
             UserRoutineSession session = null;
-            User user = new User();
-            user.setId(3L);
-            
+
             // First, create or find a UserRoutine
             UserRoutine userRoutine = UserRoutine.builder()
-                    .user(user)
+                    .user(author)
                     .routine(routines.get(0)) // use first routine as example
                     .status("active")
                     .progressPercent(0)
                     .build();
-            
-            List<UserRoutineSession> sessions = userRoutineSessionRepository.findByUserRoutine(user);
+
+            List<UserRoutineSession> sessions = userRoutineSessionRepository.findByUserRoutine(author);
             if (!sessions.isEmpty()) {
                 session = sessions.get(0);
             } else {
@@ -166,21 +232,30 @@ public class DataSeeder implements CommandLineRunner {
 
             List<UserWorkoutProgress> progresses = new ArrayList<>();
             // create progress for random routine-workouts
-            for (int i = 0; i < Math.min(50, createdRoutineWorkouts.size()); i++) {
-                RoutineWorkout rw = createdRoutineWorkouts.get(randomInt(0, createdRoutineWorkouts.size() - 1));
-                UserWorkoutProgress p = UserWorkoutProgress.builder()
-                        .session(session)
-                        .routineWorkout(rw)
-                        .workout(rw.getWorkout())
-                        .setsCompleted(Math.max(1, rw.getSets() - randomInt(0, 1)))
-                        .repsDetail(rw.getReps())
-                        .weightUsed(0.0)
-                        .durationSeconds(rw.getDurationSeconds() != null ? rw.getDurationSeconds() : 30)
-                        .notes("Completado por el seed")
-                        .build();
-                progresses.add(userWorkoutProgressRepository.save(p));
+            if (userWorkoutProgressRepository.count() == 0) {
+                for (int i = 0; i < Math.min(50, createdRoutineWorkouts.size()); i++) {
+
+
+                    RoutineWorkout rw = createdRoutineWorkouts.get(randomInt(0, createdRoutineWorkouts.size() - 1));
+
+
+                        UserWorkoutProgress p = UserWorkoutProgress.builder()
+                                .session(session)
+                                .routineWorkout(rw)
+                                .workout(rw.getWorkout())
+                                .setsCompleted(Math.max(1, rw.getSets() - randomInt(0, 1)))
+                                .repsDetail(rw.getReps())
+                                .weightUsed(0.0)
+                                .durationSeconds(rw.getDurationSeconds() != null ? rw.getDurationSeconds() : 30)
+                                .notes("Completado por el seed")
+                                .build();
+
+                        progresses.add(userWorkoutProgressRepository.save(p));
+                        
+                }
+                
+                System.out.println("Seed: created " + progresses.size() + " user workout progress rows for user 3.");
             }
-            System.out.println("Seed: created " + progresses.size() + " user workout progress rows for user 3.");
         } catch (Exception ex) {
             System.out.println(
                     "DataSeeder: No se pudo crear UserWorkoutProgress (UserRoutineSession repo/entity puede no existir). Error: "

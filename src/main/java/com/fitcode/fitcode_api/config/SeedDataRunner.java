@@ -35,6 +35,7 @@ public class SeedDataRunner {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder) {
         return args -> {
+
             // 1) Crear roles por defecto
             createRoleIfNotExists(roleRepository, "admin", "Administrador del sistema");
             createRoleIfNotExists(roleRepository, "user", "Usuario estándar");

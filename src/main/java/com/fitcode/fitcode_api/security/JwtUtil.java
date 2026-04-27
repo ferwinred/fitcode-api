@@ -58,7 +58,6 @@ public class JwtUtil {
         return claims.getSubject();
     }
 
-    @SuppressWarnings("unchecked")
     public List<String> extractRoles(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
         Object r = claims.get("roles");
