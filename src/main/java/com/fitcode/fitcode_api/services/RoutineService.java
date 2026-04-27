@@ -1,5 +1,6 @@
 package com.fitcode.fitcode_api.services;
 
+import com.fitcode.fitcode_api.dto.RoutineDto;
 import com.fitcode.fitcode_api.models.Routine;
 import com.fitcode.fitcode_api.models.RoutineWorkout;
 import com.fitcode.fitcode_api.repository.RoutineRepository;
@@ -17,8 +18,8 @@ public class RoutineService {
     private final RoutineRepository routineRepository;
     private final RoutineWorkoutRepository routineWorkoutRepository;
 
-    public Page<Routine> list(Pageable p) {
-        return routineRepository.findAll(p);
+    public Page<RoutineDto> list(Pageable p) {
+        return routineRepository.findAll(p).map(this::toDto);
     }
 
     public Routine get(Long id) {
@@ -48,5 +49,17 @@ public class RoutineService {
     public List<RoutineWorkout> getRoutineWorkouts(Long routineId) {
         Routine r = get(routineId);
         return routineWorkoutRepository.findByRoutineOrderByPositionAsc(r);
+    }
+
+    public RoutineDto toDto(Routine r) {
+        return new RoutineDto(
+                r.getId(),
+                r.getTitle(),
+                r.getDescription(),
+                r.getDifficulty(),
+                r.getDurationMinutes(),
+                r.getIsPublic(),
+                r.getAuthor().getId(),
+                r.getMetadata());
     }
 }

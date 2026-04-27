@@ -8,6 +8,7 @@ import com.fitcode.fitcode_api.services.RoutineWorkoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageRequest;
 import jakarta.validation.Valid;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class RoutineController {
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         // return pageable list simplified
-        return ResponseEntity.ok(routineService.list(org.springframework.data.domain.PageRequest.of(page, size)));
+        return ResponseEntity.ok(routineService.list(PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")

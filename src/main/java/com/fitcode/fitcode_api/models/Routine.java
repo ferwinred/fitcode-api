@@ -29,7 +29,7 @@ public class Routine {
     @Column(name = "duration_minutes", nullable = false)
     private Integer durationMinutes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_user_id")
     private User author;
 

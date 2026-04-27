@@ -1,9 +1,13 @@
 package com.fitcode.fitcode_api.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class RoutineDto {
     private Long id;
     private String title;
@@ -11,7 +15,8 @@ public class RoutineDto {
     private String difficulty;
     private Integer durationMinutes;
     private Integer isPublic;
-    private String metadata;
     private Long authorUserId;
-    private List<RoutineWorkoutDto> workouts; // optional in detail
+    private String metadata;
+    // private List<RoutineWorkoutDto> workouts; // optional in detail
+
 }

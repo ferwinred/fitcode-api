@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.security.Key;
-import java.util.Date;
 import java.util.stream.Collectors;
 
 @Component
@@ -21,8 +20,12 @@ public class JwtUtil {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expiration-ms}") long expirationMs) {
         // conviene un secret largo; Keys.hmacShaKeyFor espera bytes
+
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
+        System.out.println("JWT:" + key + " Key created with secret of length " + secret.length());
+        System.out.println("JWT:" + expirationMs + " ms expiration.");
+
     }
 
     public String generateToken(UserDetails userDetails) {
