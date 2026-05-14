@@ -67,9 +67,6 @@ public class AuthService {
                 .orElseGet(() -> roleRepository
                         .save(Role.builder().name(req.getRole()).description("Usuario por defecto").build()));
 
-        System.out.println("User to Create: " + req.getEmail() + " " + req.getFullName() + " " + req.getPassword() + " "
-                + req.getRole() + " " + req.getDisplayName());
-
         User u = User.builder()
                 .email(req.getEmail())
                 .passwordHash(passwordEncoder.encode(req.getPassword()))

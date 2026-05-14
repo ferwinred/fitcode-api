@@ -9,4 +9,6 @@ public interface UserRoutineSessionRepository extends JpaRepository<UserRoutineS
     // Define custom query methods if needed
     List<UserRoutineSession> findByUserRoutine(User userRoutine);
 
+    List<UserRoutineSession> findByUserRoutineId(Long userRoutineId);
+
 }

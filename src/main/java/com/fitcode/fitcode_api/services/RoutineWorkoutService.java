@@ -21,7 +21,7 @@ public class RoutineWorkoutService {
     private final WorkoutRepository workoutRepository;
 
     @Transactional
-    public RoutineWorkout addToRoutine(Long routineId, Long workoutId, RoutineWorkout payload) {
+    public RoutineWorkout addToRoutine(long routineId, long workoutId, RoutineWorkout payload) {
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new EntityNotFoundException("Routine not found"));
         Workout workout = workoutRepository.findById(workoutId)
@@ -31,10 +31,11 @@ public class RoutineWorkoutService {
         Integer desiredPos = payload.getPosition();
         if (desiredPos != null) {
             final Integer finalDesiredPos = desiredPos;
-            repo.findByRoutineOrderByPositionAsc(routine).stream()
+            List<RoutineWorkout> existing = repo.findByRoutineOrderByPositionAsc(routine);
+            existing.stream()
                     .filter(rw -> rw.getPosition() >= finalDesiredPos)
                     .forEach(rw -> rw.setPosition(rw.getPosition() + 1));
-            repo.saveAll(repo.findByRoutineOrderByPositionAsc(routine));
+            repo.saveAll(existing);
         } else {
             // set to last + 1
             List<RoutineWorkout> list = repo.findByRoutineOrderByPositionAsc(routine);
@@ -48,11 +49,20 @@ public class RoutineWorkoutService {
     }
 
     public void remove(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
+
         repo.deleteById(id);
         // ideally reorder positions after deletion (left as exercise)
     }
 
     public List<RoutineWorkout> listByRoutine(Long routineId) {
+
+        if (routineId == null) {
+            throw new IllegalArgumentException("routineId cannot be null");
+        }
+
         Routine r = routineRepository.findById(routineId)
                 .orElseThrow(() -> new EntityNotFoundException("Routine not found"));
         return repo.findByRoutineOrderByPositionAsc(r);
@@ -60,6 +70,11 @@ public class RoutineWorkoutService {
 
     @Transactional
     public RoutineWorkout update(Long id, RoutineWorkout payload) {
+
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
+
         RoutineWorkout exist = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found"));
         exist.setSets(payload.getSets());
         exist.setReps(payload.getReps());

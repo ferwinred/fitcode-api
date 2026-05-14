@@ -23,9 +23,6 @@ public class JwtUtil {
 
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
-        System.out.println("JWT:" + key + " Key created with secret of length " + secret.length());
-        System.out.println("JWT:" + expirationMs + " ms expiration.");
-
     }
 
     public String generateToken(UserDetails userDetails) {
