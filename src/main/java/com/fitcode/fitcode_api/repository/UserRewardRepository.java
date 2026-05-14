@@ -2,6 +2,7 @@ package com.fitcode.fitcode_api.repository;
 
 import com.fitcode.fitcode_api.models.UserReward;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRewardRepository extends JpaRepository<UserReward, Long> {
@@ -12,6 +13,8 @@ public interface UserRewardRepository extends JpaRepository<UserReward, Long> {
     Optional<UserReward> findByUserIdAndRewardCode(Long userId, String rewardCode);
 
     Optional<UserReward> findByUserId(Long userId);
+
+    List<UserReward> findAllByUserId(Long userId);
 
     Optional<UserReward> findByRewardId(Long rewardId);
 
