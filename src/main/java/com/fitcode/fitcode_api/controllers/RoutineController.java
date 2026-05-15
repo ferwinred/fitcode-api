@@ -4,7 +4,6 @@ import com.fitcode.fitcode_api.dto.RoutineDto;
 import com.fitcode.fitcode_api.models.Routine;
 import com.fitcode.fitcode_api.models.User;
 import com.fitcode.fitcode_api.services.RoutineService;
-import com.fitcode.fitcode_api.services.RoutineWorkoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoutineController {
     private final RoutineService routineService;
-    private final RoutineWorkoutService routineWorkoutService;
 
     @GetMapping
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page,
@@ -81,6 +79,8 @@ public class RoutineController {
             r.setDifficulty(dto.getDifficulty());
             r.setIsPublic(dto.getIsPublic() == null ? 1 : dto.getIsPublic());
             r.setMetadata(dto.getMetadata());
+            r.setThumbnailUrl(dto.getThumbnailUrl() != null ? dto.getThumbnailUrl()
+                    : "https://via.placeholder.com/300x200.png?text=No+Image");
             // set author if dto.authorUserId present; adapt according to your User repo
             if (dto.getAuthorUserId() != null) {
                 User author = new User();

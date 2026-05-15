@@ -60,6 +60,9 @@ public class RoutineService {
                 r.getDurationMinutes(),
                 r.getIsPublic(),
                 r.getAuthor().getId(),
-                r.getMetadata());
+                r.getMetadata(),
+                r.getThumbnailUrl(),
+                r.getCreatedAt(),
+                r.getUpdatedAt());
     }
 }
