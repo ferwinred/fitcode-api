@@ -1,6 +1,7 @@
 package com.fitcode.fitcode_api.controllers;
 
 import com.fitcode.fitcode_api.dto.UserResponseDto;
+import com.fitcode.fitcode_api.dto.UserRoutineDto;
 import com.fitcode.fitcode_api.dto.UserUpdateDto;
 import com.fitcode.fitcode_api.exceptions.ResourceNotFoundException;
 import com.fitcode.fitcode_api.models.Reward;
@@ -97,6 +98,13 @@ public class UserController {
         return ResponseEntity.ok(userRewardRepository.findAllByUserId(id).stream()
                 .map(this::toUserRewardView)
                 .toList());
+    }
+
+    @PostMapping("/{id}/routines/{routineId}/assign")
+    public ResponseEntity<UserRoutineDto> assignRoutine(@PathVariable Long id, @PathVariable Long routineId,
+            @RequestBody UserRoutineDto data) {
+        UserRoutineDto userRoutine = userService.assignRoutine(id, routineId, data);
+        return ResponseEntity.ok(userRoutine);
     }
 
     private Map<String, Object> toUserRoutineView(UserRoutine userRoutine) {
