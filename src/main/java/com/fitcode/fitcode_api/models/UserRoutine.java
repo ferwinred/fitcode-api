@@ -29,6 +29,7 @@ public class UserRoutine {
 
     private LocalDate startDate;
 
+    @Column(nullable = true)
     private LocalDate endDate;
 
     private Integer progressPercent;
@@ -40,4 +41,12 @@ public class UserRoutine {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public UserRoutine(User user, Routine routine, LocalDate startDate, Integer progressPercent, String status) {
+        this.user = user;
+        this.routine = routine;
+        this.startDate = startDate;
+        this.progressPercent = progressPercent;
+        this.status = status;
+    }
 }

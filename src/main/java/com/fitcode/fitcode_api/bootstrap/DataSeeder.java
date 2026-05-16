@@ -27,6 +27,7 @@ public class DataSeeder implements CommandLineRunner {
     private final WorkoutCategoryRepository categoryRepository;
     private final UserWorkoutProgressRepository userWorkoutProgressRepository;
     // optional repositories
+    private final UserRoutineRepository userRoutineRepository; // puede que exista o no
     private final UserRoutineSessionRepository userRoutineSessionRepository; // puede que exista o no
     private final RoleRepository roleRepository; // para asignar rol admin al usuario seed
     private final UserRepository userRepository; // para asignar autor a rutinas seed
@@ -120,7 +121,7 @@ public class DataSeeder implements CommandLineRunner {
                                 .createdAt(LocalDateTime.now())
                                 .build()));
 
-        if ( workoutVideoRepository.count() == 0) {
+        if (workoutVideoRepository.count() == 0) {
             System.out.println("DataSeeder: creando workout videos...");
             for (int i = 1; i <= 80; i++) {
                 String vid = youtubeIds[randomInt(0, youtubeIds.length - 1)];
@@ -153,6 +154,7 @@ public class DataSeeder implements CommandLineRunner {
                         .durationMinutes(randomInt(10, 60))
                         .isPublic(1)
                         .metadata("{\"seed\":\"true\"}")
+                        .thumbnailUrl(randomRoutineThumbnail())
                         .author(author)
                         .build();
 
@@ -209,14 +211,16 @@ public class DataSeeder implements CommandLineRunner {
             UserRoutineSession session = null;
 
             // First, create or find a UserRoutine
-            UserRoutine userRoutine = UserRoutine.builder()
-                    .user(author)
-                    .routine(routines.get(0)) // use first routine as example
-                    .status("active")
-                    .progressPercent(0)
-                    .build();
-
-            List<UserRoutineSession> sessions = userRoutineSessionRepository.findByUserRoutine(author);
+            UserRoutine userRoutine = userRoutineRepository
+                    .findByUserIdAndRoutineId(author.getId(), routines.get(0).getId())
+                    .orElseGet(() -> userRoutineRepository.save(
+                            UserRoutine.builder()
+                                    .user(author)
+                                    .routine(routines.get(0))
+                                    .status("active")
+                                    .progressPercent(0)
+                                    .build()));
+            List<UserRoutineSession> sessions = userRoutineSessionRepository.findByUserRoutine(userRoutine);
             if (!sessions.isEmpty()) {
                 session = sessions.get(0);
             } else {
@@ -235,25 +239,23 @@ public class DataSeeder implements CommandLineRunner {
             if (userWorkoutProgressRepository.count() == 0) {
                 for (int i = 0; i < Math.min(50, createdRoutineWorkouts.size()); i++) {
 
-
                     RoutineWorkout rw = createdRoutineWorkouts.get(randomInt(0, createdRoutineWorkouts.size() - 1));
 
+                    UserWorkoutProgress p = UserWorkoutProgress.builder()
+                            .session(session)
+                            .routineWorkout(rw)
+                            .workout(rw.getWorkout())
+                            .setsCompleted(Math.max(1, rw.getSets() - randomInt(0, 1)))
+                            .repsDetail(rw.getReps())
+                            .weightUsed(0.0)
+                            .durationSeconds(rw.getDurationSeconds() != null ? rw.getDurationSeconds() : 30)
+                            .notes("Completado por el seed")
+                            .build();
 
-                        UserWorkoutProgress p = UserWorkoutProgress.builder()
-                                .session(session)
-                                .routineWorkout(rw)
-                                .workout(rw.getWorkout())
-                                .setsCompleted(Math.max(1, rw.getSets() - randomInt(0, 1)))
-                                .repsDetail(rw.getReps())
-                                .weightUsed(0.0)
-                                .durationSeconds(rw.getDurationSeconds() != null ? rw.getDurationSeconds() : 30)
-                                .notes("Completado por el seed")
-                                .build();
+                    progresses.add(userWorkoutProgressRepository.save(p));
 
-                        progresses.add(userWorkoutProgressRepository.save(p));
-                        
                 }
-                
+
                 System.out.println("Seed: created " + progresses.size() + " user workout progress rows for user 3.");
             }
         } catch (Exception ex) {
@@ -319,5 +321,22 @@ public class DataSeeder implements CommandLineRunner {
     private String randomRoutineName() {
         String[] r = { "Express", "Morning", "Evening", "Burn", "Focus", "Relax" };
         return r[randomInt(0, r.length - 1)];
+    }
+
+    private String randomRoutineThumbnail() {
+        String[] t = {
+                "https://picsum.photos/seed/routine1/600/400",
+                "https://picsum.photos/seed/routine2/600/400",
+                "https://picsum.photos/seed/routine3/600/400",
+                "https://picsum.photos/seed/routine4/600/400",
+                "https://picsum.photos/seed/routine5/600/400",
+                "https://picsum.photos/seed/routine6/600/400",
+                "https://picsum.photos/seed/routine7/600/400",
+                "https://picsum.photos/seed/routine8/600/400",
+                "https://picsum.photos/seed/routine9/600/400",
+                "https://picsum.photos/seed/routine10/600/400"
+
+        };
+        return t[randomInt(0, t.length - 1)];
     }
 }

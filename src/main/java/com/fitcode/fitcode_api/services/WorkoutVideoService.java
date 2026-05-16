@@ -18,7 +18,8 @@ public class WorkoutVideoService {
     private final WorkoutRepository workoutRepository;
 
     public Page<WorkoutVideo> list(Pageable p) {
-        return repo.findAll(p);
+        Page<WorkoutVideo> page = repo.findAll(p);
+        return page;
     }
 
     public WorkoutVideo get(Long id) {

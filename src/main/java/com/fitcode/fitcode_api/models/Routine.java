@@ -37,6 +37,9 @@ public class Routine {
     @Builder.Default
     private Integer isPublic = 1;
 
+    @Column(name = "thumbnail_url", length = 500, nullable = false)
+    private String thumbnailUrl;
+
     @Column(columnDefinition = "LONGTEXT")
     private String metadata;
 

@@ -1,20 +1,28 @@
 package com.fitcode.fitcode_api.services.impl;
 
 import com.fitcode.fitcode_api.dto.UserResponseDto;
+import com.fitcode.fitcode_api.dto.UserRoutineDto;
 import com.fitcode.fitcode_api.dto.UserUpdateDto;
 import com.fitcode.fitcode_api.exceptions.ResourceNotFoundException;
 import com.fitcode.fitcode_api.models.Role;
+import com.fitcode.fitcode_api.models.Routine;
 import com.fitcode.fitcode_api.models.User;
+import com.fitcode.fitcode_api.models.UserRoutine;
 import com.fitcode.fitcode_api.repository.UserRepository;
+import com.fitcode.fitcode_api.repository.UserRoutineRepository;
 import com.fitcode.fitcode_api.repository.RoleRepository; // opcional si actualizas role
+import com.fitcode.fitcode_api.repository.RoutineRepository;
 import com.fitcode.fitcode_api.services.UserService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cglib.core.Local;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +33,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; // inyectado desde SecurityConfig
     private final RoleRepository roleRepository; // si no actualizas role, elimina esta dependencia
+    private final UserRoutineRepository userRoutineRepository; // para asignar rutina
+    private final RoutineRepository routineRepository; // para asignar rutina
 
     private UserResponseDto toDto(User u) {
         return UserResponseDto.builder()
@@ -50,6 +60,43 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserRoutineDto assignRoutine(Long userId, Long routineId, UserRoutineDto data) {
+        Optional<Routine> routineOpt = routineRepository.findById(routineId);
+        Optional<User> userOpt = userRepository.findActiveById(userId);
+
+        if (routineOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Rutina no encontrada con id: " + routineId);
+        }
+        if (userRoutineRepository.findByUserIdAndRoutineId(userId, routineId).isPresent()) {
+            throw new RuntimeException("El usuario ya tiene asignada esta rutina");
+        }
+
+        Routine routine = routineOpt.get();
+        User user = userOpt.orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + userId));
+
+        UserRoutine userRoutine = new UserRoutine();
+        userRoutine.setUser(user);
+        userRoutine.setRoutine(routine);
+        userRoutine.setStartDate(LocalDateTime.now().toLocalDate());
+        userRoutine.setProgressPercent(0);
+        userRoutine.setStatus("active");
+
+        userRoutine = userRoutineRepository.save(userRoutine);
+        // Lógica para asignar rutina al usuario
+        UserRoutineDto userRoutineDto = UserRoutineDto.builder()
+                .id(userRoutine.getId())
+                .userId(userRoutine.getUser().getId())
+                .routineId(userRoutine.getRoutine().getId())
+                .startDate(userRoutine.getStartDate())
+                .endDate(userRoutine.getEndDate())
+                .progressPercent(userRoutine.getProgressPercent())
+                .status(userRoutine.getStatus())
+                .build();
+
+        return userRoutineDto;
     }
 
     @Override

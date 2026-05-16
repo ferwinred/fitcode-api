@@ -72,16 +72,12 @@ public class SeedDataRunner {
     }
 
     private void createRoleIfNotExists(RoleRepository roleRepository, String roleName, String description) {
-        roleRepository.findByName(roleName).ifPresentOrElse(
-                r -> log.debug("Role '{}' already exists (id={}).", roleName, r.getId()),
-                () -> {
-                    Role role = Role.builder()
-                            .name(roleName)
-                            .description(description)
-                            .createdAt(LocalDateTime.now())
-                            .build();
-                    roleRepository.save(role);
-                    log.info("Role '{}' created.", roleName);
-                });
+        roleRepository.findByName(roleName).orElseGet(
+                () -> roleRepository.save(
+                        Role.builder()
+                                .name(roleName)
+                                .description(description)
+                                .createdAt(LocalDateTime.now())
+                                .build()));
     }
 }
