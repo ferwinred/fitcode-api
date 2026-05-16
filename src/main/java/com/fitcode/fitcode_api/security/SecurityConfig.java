@@ -59,7 +59,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/workouts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/streaks/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/routines/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/workout-videos/**").permitAll()
                         .anyRequest().authenticated())
                 .userDetailsService(userDetailsService);
