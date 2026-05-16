@@ -61,4 +61,5 @@ public class WorkoutService {
     public void delete(Long id) {
         workoutRepository.deleteById(id);
     }
+
 }
