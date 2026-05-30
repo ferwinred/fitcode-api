@@ -15,4 +15,6 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
 
     Page<Routine> findByTitleContainingIgnoreCase(String q, Pageable pageable);
 
+    Page<Routine> findByDifficultyIgnoreCase(String difficulty, Pageable pageable);
+
 }

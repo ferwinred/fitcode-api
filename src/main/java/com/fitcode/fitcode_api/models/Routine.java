@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "routines")
@@ -32,6 +34,10 @@ public class Routine {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_user_id")
     private User author;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "routine", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<RoutineWorkout> workouts = new ArrayList<>();
 
     @Column(name = "is_public", nullable = false)
     @Builder.Default

@@ -9,6 +9,7 @@ import com.fitcode.fitcode_api.models.Routine;
 import com.fitcode.fitcode_api.models.Streak;
 import com.fitcode.fitcode_api.models.UserReward;
 import com.fitcode.fitcode_api.models.UserRoutine;
+import com.fitcode.fitcode_api.models.Workout;
 import com.fitcode.fitcode_api.repository.StreakRepository;
 import com.fitcode.fitcode_api.repository.UserRewardRepository;
 import com.fitcode.fitcode_api.repository.UserRoutineRepository;
@@ -120,6 +121,8 @@ public class UserController {
         view.put("status", userRoutine.getStatus());
         view.put("created_at", userRoutine.getCreatedAt());
         view.put("updated_at", userRoutine.getUpdatedAt());
+        view.put("thumbnail_url", routine.getThumbnailUrl());
+        view.put("metadata", routine.getMetadata());
         return view;
     }
 
@@ -135,11 +138,28 @@ public class UserController {
         view.put("metadata", routine.getMetadata());
         view.put("created_at", routine.getCreatedAt());
         view.put("updated_at", routine.getUpdatedAt());
-        view.put("workouts_count", 0);
+        view.put("workout_count", routine.getWorkouts().size());
+        view.put("workouts", routine.getWorkouts().stream().map(rw -> {
+            Workout workout = rw.getWorkout();
+            Map<String, Object> workoutView = new LinkedHashMap<>();
+            workoutView.put("id", workout.getId());
+            workoutView.put("title", workout.getTitle());
+            workoutView.put("description", workout.getDescription());
+            workoutView.put("duration_minutes", workout.getDurationSeconds());
+            workoutView.put("metadata", workout.getMetadata());
+            workoutView.put("created_at", workout.getCreatedAt());
+            workoutView.put("difficulty", workout.getDifficulty());
+            workoutView.put("thumbnail_url", workout.getThumbnailUrl());
+            workoutView.put("category", workout.getCategory());
+            workoutView.put("reps", workout.getReps());
+            workoutView.put("sets", workout.getSets());
+
+            return workoutView;
+        }).toList());
         view.put("categories", List.of());
         view.put("rating", 0);
         view.put("is_free", routine.getIsPublic() == null || routine.getIsPublic() == 1);
-        view.put("thumbnail_url", null);
+        view.put("thumbnail_url", routine.getThumbnailUrl());
         return view;
     }
 

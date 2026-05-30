@@ -1,6 +1,5 @@
 package com.fitcode.fitcode_api.models;
 
-import com.fitcode.fitcode_api.enums.FavoriteType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,9 +23,8 @@ public class Favorite {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private FavoriteType type;
+    private String type;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)

@@ -5,11 +5,12 @@ import com.fitcode.fitcode_api.dto.PlanResponseDto;
 import com.fitcode.fitcode_api.models.Plan;
 import com.fitcode.fitcode_api.models.User;
 import com.fitcode.fitcode_api.services.PlanService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.PageRequest;
-import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,16 +34,19 @@ public class PlanController {
         return ResponseEntity.ok(plan);
     }
 
-    @PostMapping
+    @PostMapping("/manual")
     public ResponseEntity<PlanResponseDto> create(@Valid @RequestBody CreatePlanDto dto) {
+
         Plan r = new Plan();
         r.setTitle(dto.getTitle());
         r.setDescription(dto.getDescription());
         r.setDifficulty(dto.getDifficulty());
         r.setIsPublic(dto.getIsPublic());
         r.setMetadata(dto.getMetadata());
+        r.setThumbnailUrl(dto.getThumbnailUrl());
         // set author if provided (lookup user)
-        PlanResponseDto created = planService.create(r, dto.getRoutineIds());
+        System.err.println("Creating plan for user ID: " + dto);
+        PlanResponseDto created = planService.create(r, dto.getRoutineIds(), dto.getUserId());
         return ResponseEntity.ok(created);
     }
 
@@ -54,7 +58,7 @@ public class PlanController {
         p.setDifficulty(dto.getDifficulty());
         p.setIsPublic(dto.getIsPublic());
         p.setMetadata(dto.getMetadata());
-        
+
         return ResponseEntity.ok(planService.update(id, p));
     }
 
@@ -82,7 +86,7 @@ public class PlanController {
                 author.setId(dto.getUserId());
                 r.setUser(author);
             }
-            created.add(planService.create(r, dto.getRoutineIds()));
+            created.add(planService.create(r, dto.getRoutineIds(), dto.getUserId()));
         }
         return ResponseEntity.ok(created);
     }

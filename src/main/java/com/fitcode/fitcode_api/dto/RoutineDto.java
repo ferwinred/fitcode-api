@@ -1,6 +1,7 @@
 package com.fitcode.fitcode_api.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class RoutineDto {
     private Integer durationMinutes;
     private Integer isPublic;
     private Long authorUserId;
+    private List<WorkoutDto> workouts;
     private String metadata;
     private String thumbnailUrl;
     private LocalDateTime createdAt;

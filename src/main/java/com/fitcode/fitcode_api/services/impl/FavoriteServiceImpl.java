@@ -3,7 +3,6 @@ package com.fitcode.fitcode_api.services.impl;
 import com.fitcode.fitcode_api.dto.CreateFavoriteDto;
 import com.fitcode.fitcode_api.dto.FavoriteResponseDto;
 import com.fitcode.fitcode_api.models.Favorite;
-import com.fitcode.fitcode_api.enums.FavoriteType;
 import com.fitcode.fitcode_api.repository.FavoriteRepository;
 import com.fitcode.fitcode_api.services.FavoriteService;
 import com.fitcode.fitcode_api.models.User;
@@ -13,6 +12,9 @@ import com.fitcode.fitcode_api.repository.RoutineRepository;
 import com.fitcode.fitcode_api.repository.WorkoutVideoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,7 +40,7 @@ public class FavoriteServiceImpl implements FavoriteService {
                                 dto.getType());
 
                 if (exists) {
-                        throw new RuntimeException("Already in favorites");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already in favorites");
                 }
 
                 User user = userRepository.findById(userId)
@@ -46,11 +48,13 @@ public class FavoriteServiceImpl implements FavoriteService {
 
                 boolean existTarget = switch (dto.getType()) {
 
-                        case WORKOUT -> workoutRepository.existsById(dto.getTargetId());
+                        case "workout" -> workoutRepository.existsById(dto.getTargetId());
 
-                        case ROUTINE -> routineRepository.existsById(dto.getTargetId());
+                        case "routine" -> routineRepository.existsById(dto.getTargetId());
 
-                        case VIDEO -> workoutVideoRepository.existsById(dto.getTargetId());
+                        case "video" -> workoutVideoRepository.existsById(dto.getTargetId());
+
+                        default -> throw new IllegalArgumentException("Invalid favorite type");
                 };
 
                 if (!existTarget) {
@@ -72,7 +76,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         public void removeFavorite(
                         Long userId,
                         Long targetId,
-                        FavoriteType type) {
+                        String type) {
 
                 favoriteRepository.deleteByUserIdAndTargetIdAndType(
                                 userId,
@@ -92,7 +96,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         @Override
         public List<FavoriteResponseDto> getFavoritesByType(
                         Long userId,
-                        FavoriteType type) {
+                        String type) {
 
                 return favoriteRepository.findByUserIdAndType(userId, type)
                                 .stream()
@@ -104,7 +108,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         public boolean isFavorite(
                         Long userId,
                         Long targetId,
-                        FavoriteType type) {
+                        String type) {
 
                 return favoriteRepository.existsByUserIdAndTargetIdAndType(
                                 userId,
@@ -116,9 +120,10 @@ public class FavoriteServiceImpl implements FavoriteService {
 
                 return FavoriteResponseDto.builder()
                                 .id(favorite.getId())
-                                .targetId(favorite.getTargetId())
+                                .target_id(favorite.getTargetId())
+                                .user_id(favorite.getUser().getId())
                                 .type(favorite.getType())
-                                .createdAt(favorite.getCreatedAt())
+                                .created_at(favorite.getCreatedAt())
                                 .build();
         }
 }

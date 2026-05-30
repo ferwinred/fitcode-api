@@ -21,13 +21,16 @@ public class RoutineController {
 
     @GetMapping
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String difficulty) {
         // return pageable list simplified
+        if (difficulty != null) {
+            return ResponseEntity.ok(routineService.listByDifficulty(difficulty, PageRequest.of(page, size)));
+        }
         return ResponseEntity.ok(routineService.list(PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Routine> get(@PathVariable Long id) {
+    public ResponseEntity<RoutineDto> get(@PathVariable Long id) {
         return ResponseEntity.ok(routineService.get(id));
     }
 

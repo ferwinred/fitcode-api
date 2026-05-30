@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.SoftDelete;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,17 +27,18 @@ public class Plan {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false, length = 50)
     private String difficulty;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "is_public", nullable = false)
     @Builder.Default
     private Integer isPublic = 0;
 
-    @Column(name = "thumbnail_url", length = 500, nullable = false)
+    @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
 
     @Column(columnDefinition = "LONGTEXT")
@@ -52,6 +54,7 @@ public class Plan {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PlanRoutine> planRoutines;
+    private List<PlanRoutine> planRoutines = new ArrayList<>();
 }

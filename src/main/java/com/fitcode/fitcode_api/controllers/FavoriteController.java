@@ -2,7 +2,6 @@ package com.fitcode.fitcode_api.controllers;
 
 import com.fitcode.fitcode_api.dto.CreateFavoriteDto;
 import com.fitcode.fitcode_api.dto.FavoriteResponseDto;
-import com.fitcode.fitcode_api.enums.FavoriteType;
 import com.fitcode.fitcode_api.services.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +19,7 @@ public class FavoriteController {
     public FavoriteResponseDto addFavorite(
             @PathVariable Long userId,
             @RequestBody CreateFavoriteDto dto) {
-
+        System.out.println("Received addFavorite request: userId=" + userId + ", dto=" + dto);
         return favoriteService.addFavorite(userId, dto);
     }
 
@@ -28,7 +27,7 @@ public class FavoriteController {
     public void removeFavorite(
             @PathVariable Long userId,
             @RequestParam Long targetId,
-            @RequestParam FavoriteType type) {
+            @RequestParam String type) {
 
         favoriteService.removeFavorite(
                 userId,
@@ -39,14 +38,14 @@ public class FavoriteController {
     @GetMapping("/{userId}")
     public List<FavoriteResponseDto> getFavorites(
             @PathVariable Long userId) {
-
+        System.out.println("Received getFavorites request: userId=" + userId);
         return favoriteService.getFavorites(userId);
     }
 
     @GetMapping("/{userId}/type/{type}")
     public List<FavoriteResponseDto> getFavoritesByType(
             @PathVariable Long userId,
-            @PathVariable FavoriteType type) {
+            @PathVariable String type) {
 
         return favoriteService.getFavoritesByType(
                 userId,
@@ -57,7 +56,7 @@ public class FavoriteController {
     public boolean isFavorite(
             @PathVariable Long userId,
             @RequestParam Long targetId,
-            @RequestParam FavoriteType type) {
+            @RequestParam String type) {
 
         return favoriteService.isFavorite(
                 userId,

@@ -15,7 +15,6 @@ public class CreatePlanDto {
     @NotNull
     private String title;
 
-    @NotNull
     private String description;
 
     @NotNull
@@ -27,11 +26,11 @@ public class CreatePlanDto {
     @NotNull
     private Integer isPublic;
 
-    @NotNull
     private String metadata;
 
     private String thumbnailUrl;
 
+    @NotNull
     private List<Long> routineIds;
 
 }

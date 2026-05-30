@@ -1,6 +1,5 @@
 package com.fitcode.fitcode_api.dto;
 
-import com.fitcode.fitcode_api.enums.FavoriteType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,9 +11,11 @@ public class FavoriteResponseDto {
 
     private Long id;
 
-    private Long targetId;
+    private Long target_id;
 
-    private FavoriteType type;
+    private Long user_id;
 
-    private LocalDateTime createdAt;
+    private String type;
+
+    private LocalDateTime created_at;
 }
